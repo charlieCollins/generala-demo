@@ -16,11 +16,12 @@ dependencies {
     compile group: 'com.google.guava', name: 'guava', version: '19.0'
 }
 
-task runMainTest(type: JavaExec) {
+task runConsoleDriver(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 
     main = 'com.totsp.generala.ConsoleDriver'
 
     // arguments to pass to the application
     args 'appArg1'
+    standardInput = System.in
 }
