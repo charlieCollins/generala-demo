@@ -6,14 +6,14 @@ import java.util.List;
 /**
  * Created by cecollins on 6/23/16.
  */
-public class Controller {
+public class Controller implements IController {
 
-    // TODO constants, etc
+    // TODO constants, magic nums, etc
 
     private static final int UPPER_BONUS_THRESHOLD = 63;
     private static final int UPPER_BONUS_AMOUNT = 35;
 
-    Data data;
+    private Data data;
 
     public Controller() {
         this.data = new Data();
@@ -25,7 +25,23 @@ public class Controller {
     }
     */
 
-    public void reset() {
+    //
+    // accessors/mutators
+    //
+
+    public Data getData() {
+        return data;
+    }
+
+    public void setData(Data data) {
+        this.data = data;
+    }
+
+    //
+    // game intreface impl
+    //
+
+    public void resetData() {
         data = new Data();
         /*
         for (int i = 0; i < listeners.size(); i++) {
@@ -35,73 +51,75 @@ public class Controller {
         */
     }
 
-    // get value for specific score type (do not CHOOSE it, just offer it)
-    public int getScoreValue(ScoreType scoreType) {
+    public void rollDice() {
+        data.currentRoll++;
 
-        // 1-6 simples 1s-6s
-        int scoreValue = 0;
-        if ((scoreType == ScoreType.ONES) || (scoreType == ScoreType.TWOS)
-                || (scoreType == ScoreType.THREES) || (scoreType == ScoreType.FOURS)
-                || (scoreType == ScoreType.FIVES)  || (scoreType == ScoreType.SIXES)) {
+        if (data.currentRoll > 3) {
+            System.out.println("can't roll more than 3 times per turn");
+            return;
+        }
 
-            scoreValue = getTotalScoreForDieMatching(scoreType.getValue());
-
-        } else {
-            switch (scoreType) {
-                case THREEKIND: {
-                    // 3k
-                    if (numberOfAnyKindPresent(3)) {
-                        scoreValue = sumAllDie();
-                    }
-                    break;
-                }
-                case FOURKIND: {
-                    // 4k
-                    if (numberOfAnyKindPresent(4)) {
-                        scoreValue = sumAllDie();
-                    }
-                    break;
-                }
-                case FULLHOUSE: {
-                    // fh
-                    if (fullHousePresent()) {
-                        scoreValue = 25;
-                    }
-                    break;
-                }
-                case SMALLSTRAIGHT: {
-                    // ss
-                    if (smallStraightPresent()) {
-                        scoreValue = 30;
-                    }
-                    break;
-                }
-                case LARGESTRAIGHT: {
-                    // ls
-                    if (largeStraightPresent()) {
-                        scoreValue = 40;
-                    }
-                    break;
-                }
-                case GENERALA: {
-                    // y
-                    if (numberOfAnyKindPresent(5)) {
-                        scoreValue = 50;
-                    }
-                    break;
-                }
-                case CHANCE: {
-                    // c
-                    scoreValue = sumAllDie();
-                    break;
-                }
+        for (Die die: data.dieList) {
+            if (!die.selected) {
+                die.value = randomOneSix();
             }
         }
-        return scoreValue;
+
+        // else exception, can't keep rolling after 3 per turn
+
+        /*
+        for (int i = 0; i < listeners.size(); i++) {
+            GenericChangeListener listener = (GenericChangeListener) listeners.get(i);
+            listener.onChange(data);
+        }
+        */
     }
 
+    public String displayDice() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("current dice state:\n");
+        sb.append(data.displayDieState());
+        return sb.toString();
+    }
 
-    // select a score AND mutate data score value (update) AND mark selections
+    public void selectDie(int position) {
+        switch (position) {
+            case 1:
+                data.die1.selected = true;
+                break;
+            case 2:
+                data.die2.selected = true;
+                break;
+            case 3:
+                data.die3.selected = true;
+                break;
+            case 4:
+                data.die4.selected = true;
+                break;
+            case 5:
+                data.die5.selected = true;
+                break;
+        }
+    }
+
+    public void newTurn() {
+
+        for (Die die : data.dieList) {
+            die.selected = false;
+            die.value = 0;
+        }
+
+        data.currentRoll = 0;
+
+        /*
+        for (int i = 0; i < listeners.size(); i++) {
+            GenericChangeListener listener = (GenericChangeListener) listeners.get(i);
+            listener.onChange(data);
+        }
+        */
+    }
+
+    // select a score AND mutate data score value (update) AND mark die selections
     public void chooseScore(ScoreType scoreType) {
 
         if (data.scoresSelected.contains(scoreType)) {
@@ -169,139 +187,111 @@ public class Controller {
             }
         }
 
+        // select die for chosen scoreType
+        List<Integer> positions = getPositionsForDieMatching(scoreType.getValue());
+        for (int position : positions) {
+            selectDie(position);
+        }
+    }
+
+    public int getTotalScore() {
+        int total = 0;
+
+        for (Score score : data.scoreListNonBonus) {
+            total+= score.value;
+        }
+
+        checkAndSetUpperBonus();
+        checkAndSetLowerBonus();
+
+        total += data.upperbonus.value;
+        total += data.lowerbonus.value;
+
+        return total;
+    }
+
+    //
+    // private utils to determine scores
+    //
+
+    private void checkAndSetUpperBonus() {
         if (!data.scoresSelected.contains(ScoreType.UPPERBONUS)) {
             if ((data.ones.value + data.twos.value + data.threes.value + data.fours.value
                     + data.fives.value + data.sixes.value) >= UPPER_BONUS_THRESHOLD) {
                 data.upperbonus.value = UPPER_BONUS_AMOUNT;
                 data.scoresSelected.add(ScoreType.UPPERBONUS);
+                System.out.println("upper bonus SET");
             }
         }
-
-        // select die
-        List<Integer> positions = getPositionsForDieMatching(scoreType.getValue());
-        for (int position : positions) {
-            selectDie(position);
-        }
-
-        // manually do next turn for debug
-        ///nextTurn();
     }
 
-    // mark a die selected
-    public void selectDie(int position) {
-        switch (position) {
-            case 1:
-                data.die1Selected = true;
-                break;
-            case 2:
-                data.die2Selected = true;
-                break;
-            case 3:
-                data.die3Selected = true;
-                break;
-            case 4:
-                data.die4Selected = true;
-                break;
-            case 5:
-                data.die5Selected = true;
-                break;
-        }
+    private void checkAndSetLowerBonus() {
+        // TODO lower bonus
     }
 
-    // rolls all non seleced dice
-    public void processRoll() {
-        data.currentRoll++;
+    private int getScoreValue(ScoreType scoreType) {
 
-        if (data.currentRoll > 3) {
-            System.out.println("can't roll more than 3 times per turn");
-            return;
+        // 1-6 simples 1s-6s
+        int scoreValue = 0;
+        if ((scoreType == ScoreType.ONES) || (scoreType == ScoreType.TWOS)
+                || (scoreType == ScoreType.THREES) || (scoreType == ScoreType.FOURS)
+                || (scoreType == ScoreType.FIVES)  || (scoreType == ScoreType.SIXES)) {
+
+            scoreValue = getTotalScoreForDieMatching(scoreType.getValue());
+
+        } else {
+            switch (scoreType) {
+                case THREEKIND: {
+                    // 3k
+                    if (numberOfAnyKindPresent(3)) {
+                        scoreValue = sumAllDie();
+                    }
+                    break;
+                }
+                case FOURKIND: {
+                    // 4k
+                    if (numberOfAnyKindPresent(4)) {
+                        scoreValue = sumAllDie();
+                    }
+                    break;
+                }
+                case FULLHOUSE: {
+                    // fh
+                    if (fullHousePresent()) {
+                        scoreValue = 25;
+                    }
+                    break;
+                }
+                case SMALLSTRAIGHT: {
+                    // ss
+                    if (smallStraightPresent()) {
+                        scoreValue = 30;
+                    }
+                    break;
+                }
+                case LARGESTRAIGHT: {
+                    // ls
+                    if (largeStraightPresent()) {
+                        scoreValue = 40;
+                    }
+                    break;
+                }
+                case GENERALA: {
+                    // y
+                    if (numberOfAnyKindPresent(5)) {
+                        scoreValue = 50;
+                    }
+                    break;
+                }
+                case CHANCE: {
+                    // c
+                    scoreValue = sumAllDie();
+                    break;
+                }
+            }
         }
-
-        if (!data.die1Selected) {
-            //data.die1Selected = true;
-            data.die1Value = roll();
-        }
-
-        if (!data.die2Selected) {
-            //data.die2Selected = true;
-            data.die2Value = roll();
-        }
-
-        if (!data.die3Selected) {
-            //data.die3Selected = true;
-            data.die3Value = roll();
-        }
-
-        if (!data.die4Selected) {
-            //data.die4Selected = true;
-            data.die4Value = roll();
-        }
-
-        if (!data.die5Selected) {
-            //data.die5Selected = true;
-            data.die5Value = roll();
-        }
-
-        // else exception, can't keep rolling after 3 per turn
-
-        /*
-        for (int i = 0; i < listeners.size(); i++) {
-            GenericChangeListener listener = (GenericChangeListener) listeners.get(i);
-            listener.onChange(data);
-        }
-        */
+        return scoreValue;
     }
-
-    // resets die states for a new turn
-    public void nextTurn() {
-
-        data.die1Value = 0;
-        data.die1Selected = false;
-        data.die2Value = 0;
-        data.die2Selected = false;
-        data.die3Value = 0;
-        data.die3Selected = false;
-        data.die4Value = 0;
-        data.die4Selected = false;
-        data.die5Value = 0;
-        data.die5Selected = false;
-        data.currentRoll = 0;
-
-        /*
-        for (int i = 0; i < listeners.size(); i++) {
-            GenericChangeListener listener = (GenericChangeListener) listeners.get(i);
-            listener.onChange(data);
-        }
-        */
-    }
-
-    public int getTotalScore() {
-        int score = 0;
-        score += data.ones.value;
-        score += data.twos.value;
-        score += data.threes.value;
-        score += data.fours.value;
-        score += data.fives.value;
-        score += data.sixes.value;
-        score += data.fullhouse.value;
-        score += data.smallstraight.value;
-        score += data.largestraight.value;
-        score += data.threekind.value;
-        score += data.fourkind.value;
-        score += data.generala.value;
-        score += data.chance.value;
-        score += data.upperbonus.value;
-        score += data.lowerbonus.value;
-
-        return score;
-        //label.setText(String.valueOf(score));
-    }
-
-
-
-    //
-    // private utils to determine scores
-    //
 
     private boolean fullHousePresent() {
         boolean result = false;
@@ -313,6 +303,7 @@ public class Controller {
         int fives = getNumberOfDieMatching(5);
         int sixes = getNumberOfDieMatching(6);
 
+        // TODO short circuit these
         if (ones == 3) {
             if (numberOfAnyOtherKindPresent(2, 1)) {
                 result = true;
@@ -343,7 +334,7 @@ public class Controller {
 
     private boolean largeStraightPresent() {
         boolean result = false;
-        int[] dieValues = {data.die1Value, data.die2Value, data.die3Value, data.die4Value, data.die5Value};
+        int[] dieValues = {data.die1.value, data.die2.value, data.die3.value, data.die4.value, data.die5.value};
 
         // 1,2,3,4,5 version
         if (intInArray(dieValues, 1) && intInArray(dieValues, 2) && intInArray(dieValues, 3)
@@ -360,7 +351,7 @@ public class Controller {
 
     private boolean smallStraightPresent() {
         boolean result = false;
-        int[] dieValues = {data.die1Value, data.die2Value, data.die3Value, data.die4Value, data.die5Value};
+        int[] dieValues = {data.die1.value, data.die2.value, data.die3.value, data.die4.value, data.die5.value};
 
         // 1,2,3,4 version
         if (intInArray(dieValues, 1) && intInArray(dieValues, 2) && intInArray(dieValues, 3)
@@ -378,6 +369,24 @@ public class Controller {
             result = true;
         }
 
+        return result;
+    }
+
+    private boolean numberOfAnyKindPresent(int threshold) {
+        boolean result = false;
+        if (getNumberOfDieMatching(1) >= threshold) {
+            result = true;
+        } else if (getNumberOfDieMatching(2) >= threshold) {
+            result = true;
+        } else if (getNumberOfDieMatching(3) >= threshold) {
+            result = true;
+        } else if (getNumberOfDieMatching(4) >= threshold) {
+            result = true;
+        } else if (getNumberOfDieMatching(5) >= threshold) {
+            result = true;
+        } else if (getNumberOfDieMatching(6) >= threshold) {
+            result = true;
+        }
         return result;
     }
 
@@ -404,39 +413,21 @@ public class Controller {
         return result;
     }
 
-    private boolean numberOfAnyKindPresent(int threshold) {
-        boolean result = false;
-        if (getNumberOfDieMatching(1) >= threshold) {
-            result = true;
-        } else if (getNumberOfDieMatching(2) >= threshold) {
-            result = true;
-        } else if (getNumberOfDieMatching(3) >= threshold) {
-            result = true;
-        } else if (getNumberOfDieMatching(4) >= threshold) {
-            result = true;
-        } else if (getNumberOfDieMatching(5) >= threshold) {
-            result = true;
-        } else if (getNumberOfDieMatching(6) >= threshold) {
-            result = true;
-        }
-        return result;
-    }
-
     private int getNumberOfDieMatching(int value) {
         int result = 0;
-        if (data.die1Value == value) {
+        if (data.die1.value == value) {
             result++;
         }
-        if (data.die2Value == value) {
+        if (data.die2.value == value) {
             result++;
         }
-        if (data.die3Value == value) {
+        if (data.die3.value == value) {
             result++;
         }
-        if (data.die4Value == value) {
+        if (data.die4.value == value) {
             result++;
         }
-        if (data.die5Value == value) {
+        if (data.die5.value == value) {
             result++;
         }
         return result;
@@ -444,39 +435,39 @@ public class Controller {
 
     private int getTotalScoreForDieMatching(int value) {
         int result = 0;
-        if (data.die1Value == value) {
-            result += data.die1Value;
+        if (data.die1.value == value) {
+            result += data.die1.value;
         }
-        if (data.die2Value == value) {
-            result += data.die2Value;
+        if (data.die2.value == value) {
+            result += data.die2.value;
         }
-        if (data.die3Value == value) {
-            result += data.die3Value;
+        if (data.die3.value == value) {
+            result += data.die3.value;
         }
-        if (data.die4Value == value) {
-            result += data.die4Value;
+        if (data.die4.value == value) {
+            result += data.die4.value;
         }
-        if (data.die5Value == value) {
-            result += data.die5Value;
+        if (data.die5.value == value) {
+            result += data.die5.value;
         }
         return result;
     }
 
     private List<Integer> getPositionsForDieMatching(int value) {
         List<Integer> positions = new ArrayList<Integer>();
-        if (data.die1Value == value) {
+        if (data.die1.value == value) {
             positions.add(1);
         }
-        if (data.die2Value == value) {
+        if (data.die2.value == value) {
             positions.add(2);
         }
-        if (data.die3Value == value) {
+        if (data.die3.value == value) {
             positions.add(3);
         }
-        if (data.die4Value == value) {
+        if (data.die4.value == value) {
             positions.add(4);
         }
-        if (data.die5Value == value) {
+        if (data.die5.value == value) {
             positions.add(5);
         }
         return positions;
@@ -484,19 +475,17 @@ public class Controller {
 
     private int sumAllDie() {
         int result = 0;
-        result += data.die1Value;
-        result += data.die2Value;
-        result += data.die3Value;
-        result += data.die4Value;
-        result += data.die5Value;
+        for (Die die : data.dieList) {
+            result += die.value;
+        }
         return result;
     }
 
     //
-    // util
+    // private util
     //
 
-    private int roll() {
+    private int randomOneSix() {
         int i = 0;
         // return 1-6
         i = (int) ((Math.random() * 6) + 1);
