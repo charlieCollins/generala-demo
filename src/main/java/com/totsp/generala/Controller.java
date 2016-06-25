@@ -5,8 +5,6 @@ import java.util.List;
 
 public class Controller implements IController {
 
-    // TODO constants, magic nums, etc
-
     private static final int UPPER_BONUS_THRESHOLD = 63;
     private static final int UPPER_BONUS_AMOUNT = 35;
 
@@ -14,6 +12,11 @@ public class Controller implements IController {
 
     public Controller() {
         this.data = new Data();
+    }
+
+    // new game
+    public void resetData() {
+        data = new Data();
     }
 
     //
@@ -28,17 +31,14 @@ public class Controller implements IController {
     // game intreface impl
     //
 
-    public void resetData() {
-        data = new Data();
-    }
-
     public void rollDice() {
-        data.incrementCurrentRoll();
 
-        if (data.getCurrentRoll() > Data.NUM_DIE_ROLLS_PER_TURN) {
+        if (data.getCurrentRoll() >= Data.NUM_DIE_ROLLS_PER_TURN) {
             System.err.println("Invalid roll, can't roll more than 3 times per turn");
             return;
         }
+
+        data.incrementCurrentRoll();
 
         for (Die die: data.dieList) {
             if (!die.selected) {

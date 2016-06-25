@@ -77,8 +77,8 @@ public class Data {
         return total;
     }
 
-    public int getLowerSectionValue() {
-        // TODO
+    public int getLowerSectionScore() {
+        // TODO lower section value
         return 0;
     }
 
