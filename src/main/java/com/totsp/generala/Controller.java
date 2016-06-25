@@ -3,9 +3,6 @@ package com.totsp.generala;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by cecollins on 6/23/16.
- */
 public class Controller implements IController {
 
     // TODO constants, magic nums, etc
@@ -19,12 +16,6 @@ public class Controller implements IController {
         this.data = new Data();
     }
 
-    /*
-    public void addChangeListener(final GenericChangeListener listener) {
-        listeners.add(listener);
-    }
-    */
-
     //
     // accessors/mutators
     //
@@ -33,29 +24,19 @@ public class Controller implements IController {
         return data;
     }
 
-    public void setData(Data data) {
-        this.data = data;
-    }
-
     //
     // game intreface impl
     //
 
     public void resetData() {
         data = new Data();
-        /*
-        for (int i = 0; i < listeners.size(); i++) {
-            GenericChangeListener listener = (GenericChangeListener) listeners.get(i);
-            listener.onChange(data);
-        }
-        */
     }
 
     public void rollDice() {
-        data.currentRoll++;
+        data.incrementCurrentRoll();
 
-        if (data.currentRoll > 3) {
-            System.out.println("can't roll more than 3 times per turn");
+        if (data.getCurrentRoll() > Data.NUM_DIE_ROLLS_PER_TURN) {
+            System.err.println("Invalid roll, can't roll more than 3 times per turn");
             return;
         }
 
@@ -64,52 +45,58 @@ public class Controller implements IController {
                 die.value = randomOneSix();
             }
         }
-
-        // else exception, can't keep rolling after 3 per turn
-
-        /*
-        for (int i = 0; i < listeners.size(); i++) {
-            GenericChangeListener listener = (GenericChangeListener) listeners.get(i);
-            listener.onChange(data);
-        }
-        */
     }
 
     public String displayDice() {
         StringBuilder sb = new StringBuilder();
-        sb.append("current dice state:\n");
+        sb.append("current dice:\n");
         sb.append(data.displayDieState());
         return sb.toString();
     }
 
-    public void selectDie(int position) {
+    public String displayScoreCard() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("current scorecard:\n");
+        sb.append(data.displayScoreCard());
+        return sb.toString();
+    }
+
+    public void toggleDieSelected(int position) {
+
+        if (position < 1 || position > 5) {
+            System.err.println("invalid die selection, range 1-5");
+            return;
+        }
+
         switch (position) {
             case 1:
-                data.die1.selected = true;
+                data.die1.selected = !data.die1.selected;
                 break;
             case 2:
-                data.die2.selected = true;
+                data.die2.selected = !data.die2.selected;
                 break;
             case 3:
-                data.die3.selected = true;
+                data.die3.selected = !data.die3.selected;
                 break;
             case 4:
-                data.die4.selected = true;
+                data.die4.selected = !data.die4.selected;
                 break;
             case 5:
-                data.die5.selected = true;
+                data.die5.selected = !data.die5.selected;
                 break;
         }
     }
 
     public void newTurn() {
 
+        checkAndSetUpperBonus();
+
         for (Die die : data.dieList) {
             die.selected = false;
             die.value = 0;
         }
 
-        data.currentRoll = 0;
+        data.resetCurrentRoll();
 
         /*
         for (int i = 0; i < listeners.size(); i++) {
@@ -120,94 +107,21 @@ public class Controller implements IController {
     }
 
     // select a score AND mutate data score value (update) AND mark die selections
-    public void chooseScore(ScoreType scoreType) {
+    public boolean chooseScore(ScoreType scoreType) {
 
-        if (data.scoresSelected.contains(scoreType)) {
-            System.out.println("can't pick same scoreType twice");
-            return;
+        if (data.scoreTypesSelected.contains(scoreType)) {
+            return false;
         }
 
-        data.numScoresSelected++;
-        data.scoresSelected.add(scoreType);
-
-        int score = getScoreValue(scoreType);
-
-        switch (scoreType) {
-            case ONES: {
-                data.ones.value = score;
-                break;
-            }
-            case TWOS: {
-                data.twos.value = score;
-                break;
-            }
-            case THREES: {
-                data.threes.value = score;
-                break;
-            }
-            case FOURS: {
-                data.fours.value = score;
-                break;
-            }
-            case FIVES: {
-                data.fives.value = score;
-                break;
-            }
-            case SIXES: {
-                data.sixes.value = score;
-                break;
-            }
-            case THREEKIND: {
-                data.threekind.value = score;
-                break;
-            }
-            case FOURKIND: {
-                data.fourkind.value = score;
-                break;
-            }
-            case FULLHOUSE: {
-                data.fullhouse.value = score;
-                break;
-            }
-            case SMALLSTRAIGHT: {
-                data.smallstraight.value = score;
-                break;
-            }
-            case LARGESTRAIGHT: {
-                data.largestraight.value = score;
-                break;
-            }
-            case GENERALA: {
-                data.generala.value = score;
-                break;
-            }
-            case CHANCE: {
-                data.chance.value = score;
-                break;
-            }
-        }
-
-        // select die for chosen scoreType
-        List<Integer> positions = getPositionsForDieMatching(scoreType.getValue());
-        for (int position : positions) {
-            selectDie(position);
-        }
+        int scoreValue = getScoreValue(scoreType);
+        Score score = data.getScore(scoreType);
+        score.value = scoreValue;
+        data.scoreTypesSelected.add(scoreType);
+        return true;
     }
 
     public int getTotalScore() {
-        int total = 0;
-
-        for (Score score : data.scoreListNonBonus) {
-            total+= score.value;
-        }
-
-        checkAndSetUpperBonus();
-        checkAndSetLowerBonus();
-
-        total += data.upperbonus.value;
-        total += data.lowerbonus.value;
-
-        return total;
+        return data.getTotalScore();
     }
 
     //
@@ -215,18 +129,17 @@ public class Controller implements IController {
     //
 
     private void checkAndSetUpperBonus() {
-        if (!data.scoresSelected.contains(ScoreType.UPPERBONUS)) {
-            if ((data.ones.value + data.twos.value + data.threes.value + data.fours.value
-                    + data.fives.value + data.sixes.value) >= UPPER_BONUS_THRESHOLD) {
+        if (!data.scoreTypesSelected.contains(ScoreType.UPPERBONUS)) {
+            if (data.getUpperSectionScore() >= UPPER_BONUS_THRESHOLD) {
                 data.upperbonus.value = UPPER_BONUS_AMOUNT;
-                data.scoresSelected.add(ScoreType.UPPERBONUS);
+                data.scoreTypesSelected.add(ScoreType.UPPERBONUS);
                 System.out.println("upper bonus SET");
             }
         }
     }
 
     private void checkAndSetLowerBonus() {
-        // TODO lower bonus
+        // TODO lower bonus?
     }
 
     private int getScoreValue(ScoreType scoreType) {
@@ -236,55 +149,47 @@ public class Controller implements IController {
         if ((scoreType == ScoreType.ONES) || (scoreType == ScoreType.TWOS)
                 || (scoreType == ScoreType.THREES) || (scoreType == ScoreType.FOURS)
                 || (scoreType == ScoreType.FIVES)  || (scoreType == ScoreType.SIXES)) {
-
-            scoreValue = getTotalScoreForDieMatching(scoreType.getValue());
-
+            // can use position for 1-6 only for adding up values
+            scoreValue = getTotalScoreForDieMatching(scoreType.getPosition());
         } else {
             switch (scoreType) {
                 case THREEKIND: {
-                    // 3k
                     if (numberOfAnyKindPresent(3)) {
                         scoreValue = sumAllDie();
                     }
                     break;
                 }
                 case FOURKIND: {
-                    // 4k
                     if (numberOfAnyKindPresent(4)) {
                         scoreValue = sumAllDie();
                     }
                     break;
                 }
                 case FULLHOUSE: {
-                    // fh
                     if (fullHousePresent()) {
                         scoreValue = 25;
                     }
                     break;
                 }
                 case SMALLSTRAIGHT: {
-                    // ss
                     if (smallStraightPresent()) {
                         scoreValue = 30;
                     }
                     break;
                 }
                 case LARGESTRAIGHT: {
-                    // ls
                     if (largeStraightPresent()) {
                         scoreValue = 40;
                     }
                     break;
                 }
                 case GENERALA: {
-                    // y
                     if (numberOfAnyKindPresent(5)) {
                         scoreValue = 50;
                     }
                     break;
                 }
                 case CHANCE: {
-                    // c
                     scoreValue = sumAllDie();
                     break;
                 }
@@ -294,7 +199,6 @@ public class Controller implements IController {
     }
 
     private boolean fullHousePresent() {
-        boolean result = false;
 
         int ones = getNumberOfDieMatching(1);
         int twos = getNumberOfDieMatching(2);
@@ -303,33 +207,32 @@ public class Controller implements IController {
         int fives = getNumberOfDieMatching(5);
         int sixes = getNumberOfDieMatching(6);
 
-        // TODO short circuit these
         if (ones == 3) {
             if (numberOfAnyOtherKindPresent(2, 1)) {
-                result = true;
+                return true;
             }
         } else if (twos == 3) {
             if (numberOfAnyOtherKindPresent(2, 2)) {
-                result = true;
+                return true;
             }
         } else if (threes == 3) {
             if (numberOfAnyOtherKindPresent(2, 3)) {
-                result = true;
+                return true;
             }
         } else if (fours == 3) {
             if (numberOfAnyOtherKindPresent(2, 4)) {
-                result = true;
+                return true;
             }
         } else if (fives == 3) {
             if (numberOfAnyOtherKindPresent(2, 5)) {
-                result = true;
+                return true;
             }
         } else if (sixes == 3) {
             if (numberOfAnyOtherKindPresent(2, 6)) {
-                result = true;
+                return true;
             }
         }
-        return result;
+        return false;
     }
 
     private boolean largeStraightPresent() {

@@ -1,15 +1,12 @@
 package com.totsp.generala;
 
-/**
- * Created by cecollins on 6/24/16.
- */
 public interface IController {
-
 
     void rollDice();
     String displayDice();
-    void selectDie(int position);
-    void chooseScore(ScoreType scoreType);
+    String displayScoreCard();
+    void toggleDieSelected(int position);
+    boolean chooseScore(ScoreType scoreType); // true if valid selection, false if already chosen
     int getTotalScore();
     void newTurn();
 

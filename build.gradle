@@ -19,7 +19,7 @@ dependencies {
 task runMainTest(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
 
-    main = 'com.totsp.generala.MainTest'
+    main = 'com.totsp.generala.ConsoleDriver'
 
     // arguments to pass to the application
     args 'appArg1'
