@@ -1,6 +1,6 @@
 package com.totsp.generala;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -9,43 +9,64 @@ import java.util.*;
 
 public class Data {
 
-    public static final int NUM_SCORES_SELECTED_COMPLETE_GAME = 13;
-    public static final int NUM_DIE_ROLLS_PER_TURN = 3;
+    public final ImmutableList<Die> dieList;
+    public final Set<ScoreType> scoreTypesSelected;
 
-    public ImmutableList<Die> dieList;
-    public Die die1 = new Die();
-    public Die die2 = new Die();
-    public Die die3 = new Die();
-    public Die die4 = new Die();
-    public Die die5 = new Die();
+    private final Die die1;
+    private final Die die2;
+    private final Die die3;
+    private final Die die4;
+    private final Die die5;
 
-    public ImmutableSet<ScoreType> scoreTypes;
-    public Set<ScoreType> scoreTypesSelected;
-    public ImmutableList<Score> scoresNonBonus;
+    private final ImmutableSet<ScoreType> scoreTypes;
+    private final ImmutableList<Score> scoresNonBonus;
 
-    private Score ones = new Score(ScoreType.ONES);
-    private Score twos = new Score(ScoreType.TWOS);
-    private Score threes = new Score(ScoreType.THREES);
-    private Score fours = new Score(ScoreType.FOURS);
-    private Score fives = new Score(ScoreType.FIVES);
-    private Score sixes = new Score(ScoreType.SIXES);
-    private Score threekind = new Score(ScoreType.THREEKIND);
-    private Score fourkind = new Score(ScoreType.FOURKIND);
-    private Score fullhouse = new Score(ScoreType.FULLHOUSE);
-    private Score smallstraight = new Score(ScoreType.SMALLSTRAIGHT);
-    private Score largestraight = new Score(ScoreType.LARGESTRAIGHT);
-    private Score generala = new Score(ScoreType.GENERALA);
-    private Score chance = new Score(ScoreType.CHANCE);
-    private Score upperbonus = new Score(ScoreType.UPPERBONUS);
+    private final Score ones;
+    private final Score twos;
+    private final Score threes;
+    private final Score fours;
+    private final Score fives;
+    private final Score sixes;
+    private final Score threekind;
+    private final Score fourkind;
+    private final Score fullhouse;
+    private final Score smallstraight;
+    private final Score largestraight;
+    private final Score generala;
+    private final Score chance;
+    private final Score upperbonus;
 
     private int currentRoll;
 
     public Data() {
-        scoreTypesSelected = new HashSet<ScoreType>();
+
+        die1 = new Die();
+        die2 = new Die();
+        die3 = new Die();
+        die4 = new Die();
+        die5 = new Die();
+
+        ones = new Score(ScoreType.ONES);
+        twos = new Score(ScoreType.TWOS);
+        threes = new Score(ScoreType.THREES);
+        fours = new Score(ScoreType.FOURS);
+        fives = new Score(ScoreType.FIVES);
+        sixes = new Score(ScoreType.SIXES);
+        threekind = new Score(ScoreType.THREEKIND);
+        fourkind = new Score(ScoreType.FOURKIND);
+        fullhouse = new Score(ScoreType.FULLHOUSE);
+        smallstraight = new Score(ScoreType.SMALLSTRAIGHT);
+        largestraight = new Score(ScoreType.LARGESTRAIGHT);
+        generala = new Score(ScoreType.GENERALA);
+        chance = new Score(ScoreType.CHANCE);
+        upperbonus = new Score(ScoreType.UPPERBONUS);
+
+        scoreTypesSelected = Sets.newHashSet();
         dieList = ImmutableList.of(die1, die2, die3, die4, die5);
         scoreTypes = Sets.immutableEnumSet(EnumSet.allOf(ScoreType.class));
         scoresNonBonus = ImmutableList.of(ones, twos, threes, fours, fives, sixes, threekind, fourkind,
                 fullhouse, smallstraight, largestraight, generala, chance);
+
     }
 
     //
@@ -133,33 +154,34 @@ public class Data {
     // object
     //
 
+
     @Override
     public String toString() {
-        return Objects.toStringHelper(this)
-                .add("dieList", dieList + "\n")
-                .add("die1", die1 + "\n")
-                .add("die2", die2 + "\n")
-                .add("die3", die3 + "\n")
-                .add("die4", die4 + "\n")
-                .add("die5", die5 + "\n")
-                .add("scoreTypes", scoreTypes + "\n")
-                .add("scoreTypesSelected", scoreTypesSelected + "\n")
-                .add("scoresNonBonus", scoresNonBonus + "\n")
-                .add("ones", ones + "\n")
-                .add("twos", twos + "\n")
-                .add("threes", threes + "\n")
-                .add("fours", fours + "\n")
-                .add("fives", fives + "\n")
-                .add("sixes", sixes + "\n")
-                .add("threekind", threekind + "\n")
-                .add("fourkind", fourkind + "\n")
-                .add("fullhouse", fullhouse + "\n")
-                .add("smallstraight", smallstraight + "\n")
-                .add("largestraight", largestraight + "\n")
-                .add("generala", generala + "\n")
-                .add("chance", chance + "\n")
-                .add("upperbonus", upperbonus + "\n")
-                .add("currentRoll", currentRoll + "\n")
+        return MoreObjects.toStringHelper(this)
+                .add("dieList", dieList)
+                .add("die1", die1)
+                .add("die2", die2)
+                .add("die3", die3)
+                .add("die4", die4)
+                .add("die5", die5)
+                .add("scoreTypes", scoreTypes)
+                .add("scoreTypesSelected", scoreTypesSelected)
+                .add("scoresNonBonus", scoresNonBonus)
+                .add("ones", ones)
+                .add("twos", twos)
+                .add("threes", threes)
+                .add("fours", fours)
+                .add("fives", fives)
+                .add("sixes", sixes)
+                .add("threekind", threekind)
+                .add("fourkind", fourkind)
+                .add("fullhouse", fullhouse)
+                .add("smallstraight", smallstraight)
+                .add("largestraight", largestraight)
+                .add("generala", generala)
+                .add("chance", chance)
+                .add("upperbonus", upperbonus)
+                .add("currentRoll", currentRoll)
                 .toString();
     }
 }

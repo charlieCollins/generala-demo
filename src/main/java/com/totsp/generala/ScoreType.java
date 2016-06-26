@@ -6,9 +6,9 @@ public enum ScoreType {
     THREEKIND(7), FOURKIND(8), FULLHOUSE(9), SMALLSTRAIGHT(10), LARGESTRAIGHT(11),
     CHANCE(12), GENERALA(13), UPPERBONUS(-1);
 
-    private int position;
+    private final int position;
 
-    private ScoreType(int position) {
+    ScoreType(int position) {
         this.position = position;
     }
 
@@ -24,5 +24,4 @@ public enum ScoreType {
         }
         return null;
     }
-
 }

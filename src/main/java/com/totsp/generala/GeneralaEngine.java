@@ -1,8 +1,13 @@
 package com.totsp.generala;
 
+import com.google.common.collect.Iterables;
+
 public class GeneralaEngine implements IGeneralaEngine {
 
-    private static final int UPPER_BONUS_THRESHOLD = 63;
+    public static final int NUM_DIE_ROLLS_PER_TURN = 3;
+    public static final int UPPER_BONUS_THRESHOLD = 63;
+    public static final int NUM_SCORES_SELECTED_COMPLETE_GAME = 13;
+
     private static final int UPPER_BONUS_VALUE = 35;
     private static final int FULL_HOUSE_VALUE = 25;
     private static final int SMALL_STRAIGHT_VALUE = 30;
@@ -29,12 +34,12 @@ public class GeneralaEngine implements IGeneralaEngine {
     }
 
     //
-    // game intreface impl
+    // game interface impl
     //
 
     public void rollDice() {
 
-        if (data.getCurrentRoll() >= Data.NUM_DIE_ROLLS_PER_TURN) {
+        if (data.getCurrentRoll() >= NUM_DIE_ROLLS_PER_TURN) {
             System.err.println("Invalid roll, can't roll more than 3 times per turn");
             return;
         }
@@ -49,17 +54,11 @@ public class GeneralaEngine implements IGeneralaEngine {
     }
 
     public String displayDice() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("current dice:\n");
-        sb.append(data.displayDieState());
-        return sb.toString();
+        return "current dice:\n" + data.displayDieState();
     }
 
     public String displayScoreCard() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("current scorecard:\n");
-        sb.append(data.displayScoreCard());
-        return sb.toString();
+        return "current scorecard:\n" + data.displayScoreCard();
     }
 
     public void toggleDieSelected(int position) {
@@ -69,23 +68,8 @@ public class GeneralaEngine implements IGeneralaEngine {
             return;
         }
 
-        switch (position) {
-            case 1:
-                data.die1.selected = !data.die1.selected;
-                break;
-            case 2:
-                data.die2.selected = !data.die2.selected;
-                break;
-            case 3:
-                data.die3.selected = !data.die3.selected;
-                break;
-            case 4:
-                data.die4.selected = !data.die4.selected;
-                break;
-            case 5:
-                data.die5.selected = !data.die5.selected;
-                break;
-        }
+        Die die = data.dieList.get(position - 1);
+        die.selected = !die.selected;
     }
 
     public void newTurn() {
@@ -226,7 +210,7 @@ public class GeneralaEngine implements IGeneralaEngine {
 
     private boolean largeStraightPresent() {
         boolean result = false;
-        int[] dieValues = {data.die1.value, data.die2.value, data.die3.value, data.die4.value, data.die5.value};
+        int[] dieValues = createDieValuesArray();
 
         // 1,2,3,4,5 version
         if (intInArray(dieValues, 1) && intInArray(dieValues, 2) && intInArray(dieValues, 3)
@@ -243,7 +227,7 @@ public class GeneralaEngine implements IGeneralaEngine {
 
     private boolean smallStraightPresent() {
         boolean result = false;
-        int[] dieValues = {data.die1.value, data.die2.value, data.die3.value, data.die4.value, data.die5.value};
+        int[] dieValues = createDieValuesArray();
 
         // 1,2,3,4 version
         if (intInArray(dieValues, 1) && intInArray(dieValues, 2) && intInArray(dieValues, 3)
@@ -262,6 +246,16 @@ public class GeneralaEngine implements IGeneralaEngine {
         }
 
         return result;
+    }
+
+    private int[] createDieValuesArray() {
+        int[] dieValues = new int[data.dieList.size()];
+        int position = 0;
+        for (Die die : data.dieList) {
+            dieValues[position] = die.value;
+            position++;
+        }
+        return dieValues;
     }
 
     private boolean numberOfAnyKindPresent(int threshold) {
@@ -344,8 +338,7 @@ public class GeneralaEngine implements IGeneralaEngine {
     // don't need binary search or collection contains or such, very small arrays that are fixed, just do it
     private boolean intInArray(int[] array, int value) {
         boolean result = false;
-        for (int i = 0; i < array.length; i++) {
-            int j = array[i];
+        for (int j : array) {
             if (j == value) {
                 result = true;
                 break;
