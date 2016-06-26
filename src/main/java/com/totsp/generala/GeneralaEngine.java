@@ -1,8 +1,5 @@
 package com.totsp.generala;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class GeneralaEngine implements IGeneralaEngine {
 
     private static final int UPPER_BONUS_THRESHOLD = 63;

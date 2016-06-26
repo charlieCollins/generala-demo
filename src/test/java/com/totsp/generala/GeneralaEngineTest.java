@@ -3,7 +3,7 @@ package com.totsp.generala;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ControllerTest {
+public class GeneralaEngineTest {
 
    @Test
    public void testRollDice() {
