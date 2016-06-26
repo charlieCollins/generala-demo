@@ -1,6 +1,6 @@
 package com.totsp.generala;
 
-public interface IController {
+public interface IGeneralaEngine {
 
     void newTurn();
     void rollDice();

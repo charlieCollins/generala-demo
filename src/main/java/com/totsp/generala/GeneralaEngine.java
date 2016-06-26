@@ -3,14 +3,18 @@ package com.totsp.generala;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Controller implements IController {
+public class GeneralaEngine implements IGeneralaEngine {
 
     private static final int UPPER_BONUS_THRESHOLD = 63;
-    private static final int UPPER_BONUS_AMOUNT = 35;
+    private static final int UPPER_BONUS_VALUE = 35;
+    private static final int FULL_HOUSE_VALUE = 25;
+    private static final int SMALL_STRAIGHT_VALUE = 30;
+    private static final int LARGE_STRAIGHT_VALUE = 40;
+    private static final int GENERALA_VALUE = 50;
 
     private Data data;
 
-    public Controller() {
+    public GeneralaEngine() {
         this.data = new Data();
     }
 
@@ -97,16 +101,8 @@ public class Controller implements IController {
         }
 
         data.resetCurrentRoll();
-
-        /*
-        for (int i = 0; i < listeners.size(); i++) {
-            GenericChangeListener listener = (GenericChangeListener) listeners.get(i);
-            listener.onChange(data);
-        }
-        */
     }
 
-    // select a score AND mutate data score value (update) AND mark die selections
     public boolean chooseScore(ScoreType scoreType) {
 
         if (data.scoreTypesSelected.contains(scoreType)) {
@@ -131,15 +127,11 @@ public class Controller implements IController {
     private void checkAndSetUpperBonus() {
         if (!data.scoreTypesSelected.contains(ScoreType.UPPERBONUS)) {
             if (data.getUpperSectionScore() >= UPPER_BONUS_THRESHOLD) {
-                data.upperbonus.value = UPPER_BONUS_AMOUNT;
+                data.setUpperBonusValue(UPPER_BONUS_VALUE);
                 data.scoreTypesSelected.add(ScoreType.UPPERBONUS);
                 System.out.println("upper bonus SET");
             }
         }
-    }
-
-    private void checkAndSetLowerBonus() {
-        // TODO lower bonus?
     }
 
     private int getScoreValue(ScoreType scoreType) {
@@ -167,25 +159,25 @@ public class Controller implements IController {
                 }
                 case FULLHOUSE: {
                     if (fullHousePresent()) {
-                        scoreValue = 25;
+                        scoreValue = FULL_HOUSE_VALUE;
                     }
                     break;
                 }
                 case SMALLSTRAIGHT: {
                     if (smallStraightPresent()) {
-                        scoreValue = 30;
+                        scoreValue = SMALL_STRAIGHT_VALUE;
                     }
                     break;
                 }
                 case LARGESTRAIGHT: {
                     if (largeStraightPresent()) {
-                        scoreValue = 40;
+                        scoreValue = LARGE_STRAIGHT_VALUE;
                     }
                     break;
                 }
                 case GENERALA: {
                     if (numberOfAnyKindPresent(5)) {
-                        scoreValue = 50;
+                        scoreValue = GENERALA_VALUE;
                     }
                     break;
                 }
@@ -318,62 +310,22 @@ public class Controller implements IController {
 
     private int getNumberOfDieMatching(int value) {
         int result = 0;
-        if (data.die1.value == value) {
-            result++;
-        }
-        if (data.die2.value == value) {
-            result++;
-        }
-        if (data.die3.value == value) {
-            result++;
-        }
-        if (data.die4.value == value) {
-            result++;
-        }
-        if (data.die5.value == value) {
-            result++;
+        for (Die die : data.dieList) {
+            if (die.value == value) {
+                result++;
+            }
         }
         return result;
     }
 
     private int getTotalScoreForDieMatching(int value) {
         int result = 0;
-        if (data.die1.value == value) {
-            result += data.die1.value;
-        }
-        if (data.die2.value == value) {
-            result += data.die2.value;
-        }
-        if (data.die3.value == value) {
-            result += data.die3.value;
-        }
-        if (data.die4.value == value) {
-            result += data.die4.value;
-        }
-        if (data.die5.value == value) {
-            result += data.die5.value;
+        for (Die die : data.dieList) {
+            if (die.value == value) {
+                result += die.value;
+            }
         }
         return result;
-    }
-
-    private List<Integer> getPositionsForDieMatching(int value) {
-        List<Integer> positions = new ArrayList<Integer>();
-        if (data.die1.value == value) {
-            positions.add(1);
-        }
-        if (data.die2.value == value) {
-            positions.add(2);
-        }
-        if (data.die3.value == value) {
-            positions.add(3);
-        }
-        if (data.die4.value == value) {
-            positions.add(4);
-        }
-        if (data.die5.value == value) {
-            positions.add(5);
-        }
-        return positions;
     }
 
     private int sumAllDie() {
@@ -389,10 +341,7 @@ public class Controller implements IController {
     //
 
     private int randomOneSix() {
-        int i = 0;
-        // return 1-6
-        i = (int) ((Math.random() * 6) + 1);
-        return i;
+        return (int) ((Math.random() * 6) + 1);
     }
 
     // don't need binary search or collection contains or such, very small arrays that are fixed, just do it

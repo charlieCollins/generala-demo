@@ -1,9 +1,5 @@
 package com.totsp.generala;
 
-import rx.Observable;
-import rx.Subscriber;
-import rx.functions.Action1;
-
 import java.util.Scanner;
 
 public class ConsoleDriver {
@@ -47,7 +43,7 @@ public class ConsoleDriver {
 
         System.out.println("***GENERALA: GAME BEGIN***");
 
-        IController controller = new Controller();
+        IGeneralaEngine controller = new GeneralaEngine();
 
         // game loop
         while (true) {

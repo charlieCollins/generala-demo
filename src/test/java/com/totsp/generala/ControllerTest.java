@@ -3,13 +3,11 @@ package com.totsp.generala;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 public class ControllerTest {
 
    @Test
    public void testRollDice() {
-        IController controller = new Controller();
+        IGeneralaEngine controller = new GeneralaEngine();
         controller.newTurn();;
         Assert.assertEquals(0, controller.getData().getCurrentRoll());
         controller.rollDice();
@@ -24,7 +22,7 @@ public class ControllerTest {
 
     @Test
     public void testToggleDieSelected() {
-        IController controller = new Controller();
+        IGeneralaEngine controller = new GeneralaEngine();
         controller.newTurn();;
         controller.rollDice();
         controller.toggleDieSelected(1);
@@ -40,7 +38,7 @@ public class ControllerTest {
 
     @Test
     public void testChooseScore() {
-        IController controller = new Controller();
+        IGeneralaEngine controller = new GeneralaEngine();
         controller.newTurn();;
         controller.rollDice();
         controller.toggleDieSelected(1);
