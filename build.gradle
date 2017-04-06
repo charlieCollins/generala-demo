@@ -10,8 +10,15 @@ repositories {
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
 
-    compile 'io.reactivex:rxjava:1.0.10'
     compile group: 'com.google.guava', name: 'guava', version: '19.0'
+}
+
+jar {
+    manifest {
+        attributes(
+                "Main-Class": 'com.totsp.generala.ConsoleDriver',
+                "Class-Path": configurations.compile.collect { it.getName() }.join(' '))
+    }
 }
 
 task runConsoleDriver(type: JavaExec) {
